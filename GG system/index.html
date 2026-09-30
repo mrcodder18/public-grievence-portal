@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maharashtra Govt Grievance Portal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body oncontextmenu="return false;"> 
+    <div class="background-shape shape-1"></div>
+    <div class="background-shape shape-2"></div>
+
+    <section id="login-section" class="glass-container login-wrapper">
+        <div class="login-header">
+            <div class="emblem-container">
+                <i class="fas fa-landmark" style="font-size: 3.5rem; color: #FF9933; margin-bottom: 1rem;"></i>
+            </div>
+            <h2 id="form-title">Aaple Sarkar Login</h2>
+            <p>Maharashtra Public Grievance Redressal</p>
+        </div>
+        
+        <form id="login-form">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="login-username" placeholder="Username (Type 'admin' for Admin View)" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="login-password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="btn-primary">Enter Portal</button>
+            <p style="margin-top: 15px; cursor: pointer; color: var(--blue); font-weight: 500;" onclick="toggleAuth('register')">New user? Register here</p>
+        </form>
+
+        <form id="register-form" class="hidden">
+            <div class="input-group">
+                <i class="fas fa-id-badge"></i>
+                <input type="text" id="reg-name" placeholder="Full Name" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="reg-username" placeholder="Choose a Username" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="reg-password" placeholder="Choose a Password" required>
+            </div>
+            <button type="submit" class="btn-primary" style="background: #2ecc71;">Create Account</button>
+            <p style="margin-top: 15px; cursor: pointer; color: var(--blue); font-weight: 500;" onclick="toggleAuth('login')">Already have an account? Login</p>
+        </form>
+    </section>
+
+    <div id="dashboard-container" class="dashboard-wrapper hidden">
+        <nav class="glass-sidebar" id="sidebar">
+            <div class="nav-header">
+                <h3>Menu</h3>
+                <button id="close-nav" class="mobile-only"><i class="fas fa-times"></i></button>
+            </div>
+            <ul class="nav-links">
+                <li class="active" data-target="home-view"><i class="fas fa-home"></i> <span>Home</span></li>
+                <li data-target="submit-view"><i class="fas fa-edit"></i> <span>Submit Grievance</span></li>
+                <li data-target="previous-view"><i class="fas fa-history"></i> <span>My History</span></li>
+                <li data-target="all-view" id="all-link"><i class="fas fa-table"></i> <span>All Grievances</span></li>
+                
+                <li data-target="feedback-submit-view"><i class="fas fa-comment-dots"></i> <span>Submit Feedback</span></li>
+
+                <li data-target="priority-view" id="priority-link" class="hidden"><i class="fas fa-exclamation-triangle" style="color:#d32f2f;"></i> <span>Priority Alerts</span></li>
+                <li data-target="feedback-admin-view" id="feedback-admin-link" class="hidden"><i class="fas fa-star"></i> <span>View Feedbacks</span></li>
+                
+                <li id="logout-btn" class="logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <header class="glass-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button id="toggle-menu"><i class="fas fa-bars"></i></button>
+                </div>
+                <h4 class="portal-title">Maharashtra Grievance Portal</h4>
+                <div class="user-profile">
+                    <span id="user-display-name">Loading...</span>
+                    <span id="user-role-badge" style="font-size: 0.7rem; background: #FF9933; padding: 2px 6px; border-radius: 10px; color: white; margin-left: 5px;"></span>
+                </div>
+            </header>
+
+            <div id="content-area">
+                <div id="home-view" class="view active-view">
+                    <div class="glass-panel" style="height: 100%; overflow-y: auto;">
+                        <div class="hero-card">
+                            <h1>Welcome to Aaple Sarkar</h1>
+                            <p>Advanced Analytics Dashboard</p>
+                        </div>
+                        <div class="charts-grid">
+                            <div class="chart-box">
+                                <h3>Status Overview</h3>
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                            <div class="chart-box">
+                                <h3>Priority Analysis</h3>
+                                <canvas id="priorityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="submit-view" class="view">
+                    <div class="glass-panel form-panel">
+                        <h2>Submit New Grievance</h2>
+                        <form id="grievance-form">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <label>City</label>
+                                    <input type="text" id="g-city" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>District</label>
+                                    <input type="text" id="g-district" required>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group full-width">
+                                <label>Upload Evidence (Max 2MB)</label>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" id="g-media" accept="image/*,video/*">
+                                    <p class="file-hint"><i class="fas fa-camera"></i> Click to Upload</p>
+                                </div>
+                            </div>
+
+                            <div class="input-group full-width">
+                                <label>Describe Grievance</label>
+                                <textarea id="g-desc" rows="5" required></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Submit Complaint</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="priority-view" class="view">
+                    <div class="glass-panel full-height">
+                        <h2 style="color: #c62828;"><i class="fas fa-siren"></i> High Priority Action Items</h2>
+                        <div class="table-container">
+                            <table class="excel-table">
+                                <thead><tr><th>ID</th><th>Details</th><th>Evidence</th><th>Admin Action</th></tr></thead>
+                                <tbody id="priority-grievance-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="previous-view" class="view">
+                    <div class="glass-panel">
+                        <h2>Your History</h2>
+                        <div class="history-list" id="history-list"></div>
+                    </div>
+                </div>
+
+                <div id="all-view" class="view">
+                    <div class="glass-panel full-height">
+                        <h2>Public Grievance Database</h2>
+                        <div class="table-container">
+                            <table class="excel-table">
+                                <thead><tr><th>ID</th><th>Citizen</th><th>Issue Details</th><th>Priority</th><th>Status/Action</th></tr></thead>
+                                <tbody id="all-grievance-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="feedback-submit-view" class="view">
+                    <div class="glass-panel form-panel">
+                        <h2>Give Your Feedback</h2>
+                        <p style="margin-bottom: 1rem; color: #555;">Rate your experience with the portal.</p>
+                        <form id="feedback-form">
+                            <div class="star-rating">
+                                <i class="fas fa-star star" data-value="1"></i>
+                                <i class="fas fa-star star" data-value="2"></i>
+                                <i class="fas fa-star star" data-value="3"></i>
+                                <i class="fas fa-star star" data-value="4"></i>
+                                <i class="fas fa-star star" data-value="5"></i>
+                                <input type="hidden" id="rating-value" value="0">
+                            </div>
+                            <div class="input-group full-width" style="margin-top: 1rem;">
+                                <label>Comments</label>
+                                <textarea id="f-msg" rows="4" placeholder="How was your experience?" required></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Submit Feedback</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="feedback-admin-view" class="view">
+                    <div class="glass-panel full-height">
+                        <h2>User Feedback Dashboard</h2>
+                        <div class="history-list" id="admin-feedback-list">
+                            <div class="empty-state">Loading feedbacks...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
